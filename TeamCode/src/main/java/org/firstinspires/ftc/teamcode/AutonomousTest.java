@@ -4,6 +4,7 @@ import android.renderscript.ScriptIntrinsicResize;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.GyroSensor;
@@ -18,7 +19,7 @@ public class AutonomousTest extends LinearOpMode {
 
 
     //*************************
-    //components initialization
+    //components declaration
     //*************************
     DcMotor motorFrontRight = null;
     DcMotor motorFrontLeft = null;
@@ -28,6 +29,8 @@ public class AutonomousTest extends LinearOpMode {
     GyroSensor gyro = null;
 
     OpticalDistanceSensor distanceSensor = null;
+
+    ColorSensor color_sensor = null;
 
     //******************
     //static variables
@@ -40,12 +43,17 @@ public class AutonomousTest extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
 
+
+        //*************************
+        //components initialization
+        //*************************
         motorFrontRight = hardwareMap.dcMotor.get("motorFrontRight");
         motorFrontLeft = hardwareMap.dcMotor.get("motorFrontLeft");
         motorRearRight = hardwareMap.dcMotor.get("motorRearRight");
         motorRearLeft = hardwareMap.dcMotor.get("motorRearLeft");
         gyro = hardwareMap.gyroSensor.get("gyro");
         distanceSensor = hardwareMap.opticalDistanceSensor.get("distanceSensor");
+        color_sensor = hardwareMap.colorSensor.get("color_sensor");
 
 
         motorFrontRight.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -55,9 +63,14 @@ public class AutonomousTest extends LinearOpMode {
 
 
 
+        //**************
+        //main program
+        //**************
         waitForStart();
 
-        gyro.calibrate();
+        double reflectedDistance;
+
+        gyro.calibrate();                                                                           //calibrates the gyroscope to position 0
 
         moveForwardTime(MOVE_SPEED, 5000);
         moveForwardTime(MOVE_SPEED, 1000);
@@ -65,15 +78,21 @@ public class AutonomousTest extends LinearOpMode {
         turnRightToDegrees(MOVE_SPEED, 0);
         moveForward(MOVE_SPEED);
 
-        double reflectedDistance;
+
 
         do {
-            reflectedDistance = linearAlgorithmODS(distanceSensor.getLightDetected());
-        }while(reflectedDistance > 2);
+            reflectedDistance = linearAlgorithmODS(distanceSensor.getLightDetected());              //translates the output data from the ODS to an approximation of the distance in cm
+        }while(reflectedDistance > 2);                                                              //if the sensor reads less than 2 cm the motors stop
 
-        stopMovement();
+        stopMovement();                                                                             //stops the movement
+
+        readColor();                                                                                //prototype of reading the color using the hue scale
     }
 
+
+    //*********
+    //methods
+    //*********
 
 
     public void moveForward(double power){
@@ -128,6 +147,25 @@ public class AutonomousTest extends LinearOpMode {
         //*********************************************************************************
 
         return Math.pow(lightIntensity,-0.5)*ODS_SCALE_MULTIPLIER;
+    }
+
+    public char readColor(){
+
+        int hue = color_sensor.argb();
+
+        if(hue < 60 || hue > 300){
+
+            return 'r';
+        }
+        if(hue > 60 && hue < 180){
+            return 'g';
+        }
+        if(hue > 180 && hue < 300){
+            return 'b';
+        }
+
+
+        return 'x';
     }
 
 }
