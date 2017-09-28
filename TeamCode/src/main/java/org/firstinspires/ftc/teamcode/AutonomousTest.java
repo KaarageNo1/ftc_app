@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import android.renderscript.ScriptIntrinsicResize;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -37,22 +39,35 @@ public class AutonomousTest extends LinearOpMode {
         waitForStart();
 
         moveForwardTime(MOVE_SPEED, 5000);
+        turnLeftTime(MOVE_SPEED, 3000);
+        moveForwardTime(MOVE_SPEED, 1000);
         stopMovement();
     }
 
-    public double MOVE_SPEED = 1;
+    public double MOVE_SPEED = 0.8;
 
 
     public void moveForward(double power){
 
         motorFrontRight.setPower(power);
-        motorFrontLeft.setPower(-power);
+        motorFrontLeft.setPower(power);
         motorRearRight.setPower(power);
-        motorRearLeft.setPower(-power);
+        motorRearLeft.setPower(power);
     }
+
 
     public void moveForwardTime (double power, long time) throws InterruptedException{
         moveForward(power);
+        Thread.sleep(time);
+    }
+
+
+    public void turnLeftTime(double power,long time) throws InterruptedException{
+        motorFrontRight.setPower(power);
+        motorFrontLeft.setPower(-power);
+        motorRearLeft.setPower(power);
+        motorRearRight.setPower(-power);
+
         Thread.sleep(time);
     }
 
