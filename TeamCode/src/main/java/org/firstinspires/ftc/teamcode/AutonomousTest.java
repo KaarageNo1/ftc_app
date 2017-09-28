@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.GyroSensor;
+import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 
 /**
  * Created by Dani on 9/27/2017.
@@ -15,12 +16,25 @@ import com.qualcomm.robotcore.hardware.GyroSensor;
 
 public class AutonomousTest extends LinearOpMode {
 
+
+    //*************************
+    //components initialization
+    //*************************
     DcMotor motorFrontRight = null;
     DcMotor motorFrontLeft = null;
     DcMotor motorRearRight = null;
     DcMotor motorRearLeft = null;
 
     GyroSensor gyro = null;
+
+    OpticalDistanceSensor distanceSensor = null;
+
+    //******************
+    //static variables
+    //******************
+    public double MOVE_SPEED = 0.5;
+    public double ODS_SCALE_MULTIPLIER = 46;
+
 
 
     @Override
@@ -30,6 +44,8 @@ public class AutonomousTest extends LinearOpMode {
         motorFrontLeft = hardwareMap.dcMotor.get("motorFrontLeft");
         motorRearRight = hardwareMap.dcMotor.get("motorRearRight");
         motorRearLeft = hardwareMap.dcMotor.get("motorRearLeft");
+        gyro = hardwareMap.gyroSensor.get("gyro");
+        distanceSensor = hardwareMap.opticalDistanceSensor.get("distanceSensor");
 
 
         motorFrontRight.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -44,14 +60,20 @@ public class AutonomousTest extends LinearOpMode {
         gyro.calibrate();
 
         moveForwardTime(MOVE_SPEED, 5000);
-       // turnLeftTime(MOVE_SPEED, 3000);
         moveForwardTime(MOVE_SPEED, 1000);
-        //turnLeftGyro(MOVE_SPEED);
-        turnToLeftDegrees(MOVE_SPEED, 270);
+        turnLeftToDegrees(MOVE_SPEED, 270);
+        turnRightToDegrees(MOVE_SPEED, 0);
+        moveForward(MOVE_SPEED);
+
+        double reflectedDistance;
+
+        do {
+            reflectedDistance = linearAlgorithmODS(distanceSensor.getLightDetected());
+        }while(reflectedDistance > 2);
+
         stopMovement();
     }
 
-    public double MOVE_SPEED = 0.8;
 
 
     public void moveForward(double power){
@@ -69,34 +91,43 @@ public class AutonomousTest extends LinearOpMode {
     }
 
 
-    public void turnLeft(double power){
+    public void turn(double power, String direction){
+
+        if(direction.equals("right")){
+            power = -power;
+        }
+
         motorFrontRight.setPower(power);
         motorFrontLeft.setPower(-power);
-        motorRearLeft.setPower(power);
-        motorRearRight.setPower(-power);
+        motorRearLeft.setPower(-power);
+        motorRearRight.setPower(power);
     }
 
-    /*public void turnLeftTime(double power,long time) throws InterruptedException{
-        turnLeft(power);
-
-        Thread.sleep(time);
-    }*/
-
-    /*public void turnLeftGyro(double power){
-        while(gyro.getHeading() > 270 || gyro.getHeading() < 260) {
-            turnLeft(power);
-        }
-    }*/
-
-    public void turnToLeftDegrees(double power, double degree){
+    public void turnLeftToDegrees(double power, double degree){
         while(gyro.getHeading() != degree) {
-            turnLeft(power);
+            turn(power,"left");
+        }
+    }
+
+    public void turnRightToDegrees(double power, double degree){
+        while(gyro.getHeading() != degree) {
+            turn(power,"right");
         }
     }
 
 
     public void stopMovement(){
         moveForward(0);
+    }
+
+
+    public double linearAlgorithmODS(double lightIntensity){
+        //*********************************************************************************
+        //makes the value returned by the sensor proportional with the distance in centimeters
+        //inverse square root (intensity at the power 0.5)
+        //*********************************************************************************
+
+        return Math.pow(lightIntensity,-0.5)*ODS_SCALE_MULTIPLIER;
     }
 
 }
