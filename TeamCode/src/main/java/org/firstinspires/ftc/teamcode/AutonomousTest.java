@@ -36,6 +36,7 @@ public class AutonomousTest extends LinearOpMode {
     //static variables
     //******************
     public double MOVE_SPEED = 0.5;
+    public double TURN_SPEED = 0.1;
     public double ODS_SCALE_MULTIPLIER = 46;
 
 
@@ -47,13 +48,13 @@ public class AutonomousTest extends LinearOpMode {
         //*************************
         //components initialization
         //*************************
-        motorFrontRight = hardwareMap.dcMotor.get("motorFrontRight");
-        motorFrontLeft = hardwareMap.dcMotor.get("motorFrontLeft");
-        motorRearRight = hardwareMap.dcMotor.get("motorRearRight");
-        motorRearLeft = hardwareMap.dcMotor.get("motorRearLeft");
+        motorFrontRight = hardwareMap.dcMotor.get("right_drive_front");
+        motorFrontLeft = hardwareMap.dcMotor.get("left_drive_front");
+        motorRearRight = hardwareMap.dcMotor.get("right_drive_back");
+        motorRearLeft = hardwareMap.dcMotor.get("left_drive_back");
         gyro = hardwareMap.gyroSensor.get("gyro");
-        distanceSensor = hardwareMap.opticalDistanceSensor.get("distanceSensor");
-        color_sensor = hardwareMap.colorSensor.get("color_sensor");
+        distanceSensor = hardwareMap.opticalDistanceSensor.get("ods");
+        color_sensor = hardwareMap.colorSensor.get("color");
 
 
         motorFrontRight.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -73,20 +74,28 @@ public class AutonomousTest extends LinearOpMode {
         gyro.calibrate();                                                                           //calibrates the gyroscope to position 0
 
         moveForwardTime(MOVE_SPEED, 5000);
-        moveForwardTime(MOVE_SPEED, 1000);
-        turnLeftToDegrees(MOVE_SPEED, 270);
-        turnRightToDegrees(MOVE_SPEED, 0);
+        stopMovement();
+        //moveForwardTime(MOVE_SPEED, 1000);
+        gyro.calibrate();
+        turnRightToDegrees(TURN_SPEED, 90);
+        stopMovement();
+        //turnRightToDegrees(TURN_SPEED, 180);
         moveForward(MOVE_SPEED);
 
 
 
-        do {
-            reflectedDistance = linearAlgorithmODS(distanceSensor.getLightDetected());              //translates the output data from the ODS to an approximation of the distance in cm
-        }while(reflectedDistance > 2);                                                              //if the sensor reads less than 2 cm the motors stop
+        /*do {
+            //reflectedDistance = linearAlgorithmODS(distanceSensor.getLightDetected());              //translates the output data from the ODS to an approximation of the distance in cm
+            reflectedDistance = distanceSensor.getLightDetected();
+
+        }while(reflectedDistance < 500);     */                                                         //if the sensor reads less than 2 cm the motors stop
 
         stopMovement();                                                                             //stops the movement
 
-        readColor();                                                                                //prototype of reading the color using the hue scale
+
+        //readColor();                                                                              //prototype of reading the color using the hue scale
+        //telemetry.addData("");
+
     }
 
 
@@ -129,9 +138,18 @@ public class AutonomousTest extends LinearOpMode {
     }
 
     public void turnRightToDegrees(double power, double degree){
-        while(gyro.getHeading() != degree) {
-            turn(power,"right");
+        turn(power, "right");
+        gyro.calibrate();
+        
+        int heading = gyro.getHeading();
+
+        while(!(heading > degree-10 && heading < degree +10) ) {
+
+            heading = gyro.getHeading();
+            //turn(power,"right");
+            //telemetry.addData("Degrees",gyro.getHeading());
         }
+        stopMovement();
     }
 
 
