@@ -9,10 +9,9 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.GyroSensor;
 import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
-/**
- * Created by Dani on 9/27/2017.
- */
+
 @Autonomous(name = "AutonomousTest", group = "Autonomous")
 
 public class AutonomousTest extends LinearOpMode {
@@ -39,6 +38,7 @@ public class AutonomousTest extends LinearOpMode {
     public double TURN_SPEED = 0.1;
     public double ODS_SCALE_MULTIPLIER = 46;
 
+    ElapsedTime timer = new ElapsedTime();
 
 
     @Override
@@ -63,39 +63,33 @@ public class AutonomousTest extends LinearOpMode {
         motorRearLeft.setDirection(DcMotorSimple.Direction.REVERSE);
 
 
+        timer.reset();
+
+        while (!isStopRequested() && gyro.isCalibrating())  {
+
+            telemetry.addData("calibrating", "%s", Math.round(timer.seconds())%2==0 ? "|.." : "..|");
+
+            telemetry.update();
+
+            sleep(50);
+
+        }
 
         //**************
         //main program
         //**************
         waitForStart();
 
-        double reflectedDistance;
-
-        gyro.calibrate();                                                                           //calibrates the gyroscope to position 0
 
         moveForwardTime(MOVE_SPEED, 5000);
         stopMovement();
-        //moveForwardTime(MOVE_SPEED, 1000);
-        gyro.calibrate();
+        sleep(2000);
         turnRightToDegrees(TURN_SPEED, 90);
+        sleep(2000);
+        moveForwardODS(MOVE_SPEED, 5);
+
+
         stopMovement();
-        //turnRightToDegrees(TURN_SPEED, 180);
-        moveForward(MOVE_SPEED);
-
-
-
-        /*do {
-            //reflectedDistance = linearAlgorithmODS(distanceSensor.getLightDetected());              //translates the output data from the ODS to an approximation of the distance in cm
-            reflectedDistance = distanceSensor.getLightDetected();
-
-        }while(reflectedDistance < 500);     */                                                         //if the sensor reads less than 2 cm the motors stop
-
-        stopMovement();                                                                             //stops the movement
-
-
-        //readColor();                                                                              //prototype of reading the color using the hue scale
-        //telemetry.addData("");
-
     }
 
 
@@ -118,6 +112,22 @@ public class AutonomousTest extends LinearOpMode {
         Thread.sleep(time);
     }
 
+    public void moveForwardODS (double power, double distance){
+        double reflectedDistance;
+        moveForward(power);
+
+        do{
+            reflectedDistance = linearAlgorithmODS(distanceSensor.getLightDetected());
+
+            telemetry.addData("Distance", reflectedDistance);
+            telemetry.update();
+
+        }while(reflectedDistance > distance);
+
+        stopMovement();
+
+    }
+
 
     public void turn(double power, String direction){
 
@@ -132,22 +142,31 @@ public class AutonomousTest extends LinearOpMode {
     }
 
     public void turnLeftToDegrees(double power, double degree){
-        while(gyro.getHeading() != degree) {
-            turn(power,"left");
+        turn(power, "left");
+
+
+        int heading = gyro.getHeading();
+
+        while(!(heading > degree-10 && heading < degree +10) ) {
+
+            heading = gyro.getHeading();
+            telemetry.addData("Degrees",heading);
+            telemetry.update();
         }
+        stopMovement();
     }
 
     public void turnRightToDegrees(double power, double degree){
         turn(power, "right");
-        gyro.calibrate();
+
         
         int heading = gyro.getHeading();
 
         while(!(heading > degree-10 && heading < degree +10) ) {
 
             heading = gyro.getHeading();
-            //turn(power,"right");
-            //telemetry.addData("Degrees",gyro.getHeading());
+            telemetry.addData("Degrees",heading);
+            telemetry.update();
         }
         stopMovement();
     }
