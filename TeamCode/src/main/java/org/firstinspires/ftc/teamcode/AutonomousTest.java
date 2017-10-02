@@ -35,7 +35,7 @@ public class AutonomousTest extends LinearOpMode {
     //static variables
     //******************
     public double MOVE_SPEED = 0.5;
-    public double TURN_SPEED = 0.1;
+    public double TURN_SPEED = 0.2;
     public double ODS_SCALE_MULTIPLIER = 46;
 
     ElapsedTime timer = new ElapsedTime();
@@ -65,9 +65,11 @@ public class AutonomousTest extends LinearOpMode {
 
         timer.reset();
 
-        while (!isStopRequested() && gyro.isCalibrating())  {
+        gyro.calibrate();
 
-            telemetry.addData("calibrating", "%s", Math.round(timer.seconds())%2==0 ? "|.." : "..|");
+        while (gyro.isCalibrating())  {
+
+            telemetry.addData("calibrating", Math.round(timer.seconds()));
 
             telemetry.update();
 
@@ -83,11 +85,11 @@ public class AutonomousTest extends LinearOpMode {
 
         moveForwardTime(MOVE_SPEED, 5000);
         stopMovement();
+        calibrateGyro();
+        turnRightToDegrees(TURN_SPEED, 270);
         sleep(2000);
-        turnRightToDegrees(TURN_SPEED, 90);
-        sleep(2000);
-        moveForwardODS(MOVE_SPEED, 5);
-
+        //moveForwardODS(MOVE_SPEED, 5);
+        getColor();
 
         stopMovement();
     }
@@ -114,15 +116,15 @@ public class AutonomousTest extends LinearOpMode {
 
     public void moveForwardODS (double power, double distance){
         double reflectedDistance;
-        moveForward(power);
+        //moveForward(power);
 
         do{
-            reflectedDistance = linearAlgorithmODS(distanceSensor.getLightDetected());
+            reflectedDistance = distanceSensor.getLightDetected();
 
             telemetry.addData("Distance", reflectedDistance);
             telemetry.update();
 
-        }while(reflectedDistance > distance);
+        }while(reflectedDistance < distance);
 
         stopMovement();
 
@@ -183,7 +185,7 @@ public class AutonomousTest extends LinearOpMode {
         //inverse square root (intensity at the power 0.5)
         //*********************************************************************************
 
-        return Math.pow(lightIntensity,-0.5)*ODS_SCALE_MULTIPLIER;
+        return Math.sqrt(1/lightIntensity)*ODS_SCALE_MULTIPLIER;
     }
 
     public char readColor(){
@@ -203,6 +205,33 @@ public class AutonomousTest extends LinearOpMode {
 
 
         return 'x';
+    }
+
+    public void calibrateGyro(){
+        gyro.calibrate();
+
+        while (gyro.isCalibrating())  {
+
+            telemetry.addData("calibrating", Math.round(timer.seconds()));
+
+            telemetry.update();
+
+            sleep(50);
+
+        }
+    }
+
+    public void getColor(){
+
+        color_sensor.enableLed(false);
+
+        while(!isStopRequested()) {
+
+            double color = color_sensor.red();
+
+            telemetry.addData("Color number", color*10);
+            telemetry.update();
+        }
     }
 
 }
