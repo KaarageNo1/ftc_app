@@ -12,6 +12,24 @@ import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 
+//--------------------------------------------------------------
+//**************************************************************
+//--------------------------------------------------------------
+//TASK CA SA VAD CA FACETI SI VOI CEVA:
+//
+//functia getColor() returneaza valoarea de lumina rosie. Folositi-o ca si model. NU O FOLOSITI IN COD.
+//folosind functiile de aflare a intensitatii culorilor separat (color_sensor.blue()/.red()/.green())
+//sa se creeze un algoritm de a misca motorul barei de metal din fata spre culoara albastra, initializand motorul
+//si hardware.map-ul lui. Nu trebuie sa il numiti special in harware map.
+//Asta e tot.
+//--------------------------------------------------------------
+//**************************************************************
+//--------------------------------------------------------------
+
+
+
+
+
 @Autonomous(name = "AutonomousTest", group = "Autonomous")
 
 public class AutonomousTest extends LinearOpMode {
