@@ -88,7 +88,6 @@ public class AutonomousTest extends LinearOpMode {
         calibrateGyro();
         turnRightToDegrees(TURN_SPEED, 270);
         sleep(2000);
-        //moveForwardODS(MOVE_SPEED, 5);
         getColor();
 
         stopMovement();
@@ -186,25 +185,6 @@ public class AutonomousTest extends LinearOpMode {
         //*********************************************************************************
 
         return Math.sqrt(1/lightIntensity)*ODS_SCALE_MULTIPLIER;
-    }
-
-    public char readColor(){
-
-        int hue = color_sensor.argb();
-
-        if(hue < 60 || hue > 300){
-
-            return 'r';
-        }
-        if(hue > 60 && hue < 180){
-            return 'g';
-        }
-        if(hue > 180 && hue < 300){
-            return 'b';
-        }
-
-
-        return 'x';
     }
 
     public void calibrateGyro(){
