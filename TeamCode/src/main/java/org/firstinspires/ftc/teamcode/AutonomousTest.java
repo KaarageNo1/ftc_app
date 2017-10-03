@@ -13,22 +13,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 
-//--------------------------------------------------------------
-//**************************************************************
-//--------------------------------------------------------------
-//TASK CA SA VAD CA FACETI SI VOI CEVA:
-//
-//functia getColor() returneaza valoarea de lumina rosie. Folositi-o ca si model. NU O FOLOSITI IN COD.
-//folosind functiile de aflare a intensitatii culorilor separat (color_sensor.blue()/.red()/.green())
-//sa se creeze un algoritm de a misca motorul barei de metal din fata spre culoara albastra, initializand motorul
-//si hardware.map-ul lui. Nu trebuie sa il numiti special in harware map.
-//Asta e tot.
-//--------------------------------------------------------------
-//**************************************************************
-//--------------------------------------------------------------
-
-
-
 
 
 @Autonomous(name = "AutonomousTest", group = "Autonomous")
@@ -39,15 +23,17 @@ public class AutonomousTest extends LinearOpMode {
     //*************************
     //components declaration
     //*************************
-    DcMotor motorFrontRight = null;
-    DcMotor motorFrontLeft = null;
-    DcMotor motorRearRight = null;
-    DcMotor motorRearLeft = null;
-    GyroSensor gyro = null;
 
-    OpticalDistanceSensor distanceSensor = null;
+    private DcMotor motorFrontRight = null;
+    private DcMotor motorFrontLeft = null;
+    private DcMotor motorRearRight = null;
+    private DcMotor motorRearLeft = null;
 
-    ColorSensor color_sensor = null;
+    private GyroSensor gyro = null;
+
+    private OpticalDistanceSensor distanceSensor = null;
+
+    private ColorSensor color_sensor = null;
 
     // Servos
     private Servo servoBox = null;
@@ -59,9 +45,9 @@ public class AutonomousTest extends LinearOpMode {
     //******************
     //static variables
     //******************
-    public double MOVE_SPEED = 0.5;
-    public double TURN_SPEED = 0.1;
-    public double ODS_SCALE_MULTIPLIER = 46;
+    private double MOVE_SPEED = 0.5;
+    private double TURN_SPEED = 0.1;
+    private double ODS_SCALE_MULTIPLIER = 46;
     private static final double SELECTOR_UP = 1.0;
     private static final double SELECTOR_DOWN = 0.3;
     private static final double BOX_UP = 0.0;
@@ -76,6 +62,8 @@ public class AutonomousTest extends LinearOpMode {
     private double clipValue = 0.9;
     private double cap_pos = 0.05;
 
+
+    //Simple timer - helps track the calibration
     ElapsedTime timer = new ElapsedTime();
 
 
@@ -86,10 +74,12 @@ public class AutonomousTest extends LinearOpMode {
         //*************************
         //components initialization
         //*************************
+        //Map drive motors
         motorFrontRight = hardwareMap.dcMotor.get("right_drive_front");
         motorFrontLeft = hardwareMap.dcMotor.get("left_drive_front");
         motorRearRight = hardwareMap.dcMotor.get("right_drive_back");
         motorRearLeft = hardwareMap.dcMotor.get("left_drive_back");
+        //Map sensors
         gyro = hardwareMap.gyroSensor.get("gyro");
         distanceSensor = hardwareMap.opticalDistanceSensor.get("ods");
         color_sensor = hardwareMap.colorSensor.get("color");
@@ -100,6 +90,21 @@ public class AutonomousTest extends LinearOpMode {
         servoBeacon = hardwareMap.servo.get("beacon");
         servoCapping = hardwareMap.servo.get("clapita");
 
+
+        //Setting direction drive motors
+        motorFrontRight.setDirection(DcMotorSimple.Direction.FORWARD);
+        motorFrontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        motorRearRight.setDirection(DcMotorSimple.Direction.FORWARD);
+        motorRearLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        //Setting direction servos
+        servoClaw.setDirection(Servo.Direction.FORWARD);
+        servoBox.setDirection(Servo.Direction.FORWARD);
+        servoSelector.setDirection(Servo.Direction.FORWARD);
+        servoBeacon.setDirection(Servo.Direction.FORWARD);
+        servoCapping.setDirection(Servo.Direction.FORWARD);
+
+
+        //Initial position servos
         servoClaw.setPosition(MID_SERVO);
         servoCapping.setPosition(cap_pos);
         servoBox.setPosition(BOX_DOWN);
@@ -107,28 +112,12 @@ public class AutonomousTest extends LinearOpMode {
         servoBeacon.setPosition(BEACON_LEFT);
 
 
-        motorFrontRight.setDirection(DcMotorSimple.Direction.FORWARD);
-        motorFrontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
-        motorRearRight.setDirection(DcMotorSimple.Direction.FORWARD);
-        motorRearLeft.setDirection(DcMotorSimple.Direction.REVERSE);
-        servoClaw.setDirection(Servo.Direction.FORWARD);
-        servoBox.setDirection(Servo.Direction.FORWARD);
-        servoSelector.setDirection(Servo.Direction.FORWARD);
-        servoBeacon.setDirection(Servo.Direction.FORWARD);
-        servoCapping.setDirection(Servo.Direction.FORWARD);
+        //timer starts
         timer.reset();
 
-        gyro.calibrate();
+        //initial gyro calibration
+        calibrateGyro();
 
-        while (gyro.isCalibrating())  {
-
-            telemetry.addData("calibrating", Math.round(timer.seconds()));
-
-            telemetry.update();
-
-            sleep(50);
-
-        }
 
         //**************
         //main program
@@ -139,8 +128,10 @@ public class AutonomousTest extends LinearOpMode {
 
         turnRightToDegrees(TURN_SPEED, 270);
         sleep(2000);
-        do {
 
+        //Simple loop - running until the color sensor received input data and the servo has moved
+        do {
+            //displays data from sensor - helps debugging
             telemetry.addData("Color blue:", color_sensor.blue());
             telemetry.update();
         }while(!moveArmToBlue());
@@ -176,7 +167,7 @@ public class AutonomousTest extends LinearOpMode {
 
     public void moveForwardODS (double power, double distance){
         double reflectedDistance;
-        //moveForward(power);
+        moveForward(power);
 
         do{
             reflectedDistance = distanceSensor.getLightDetected();
@@ -204,11 +195,11 @@ public class AutonomousTest extends LinearOpMode {
     }
 
     public void turnLeftToDegrees(double power, double degree){
+
         turn(power, "left");
 
-
         int heading = gyro.getHeading();
-
+        
         while(!(heading > degree-10 && heading < degree +10) ) {
 
             heading = gyro.getHeading();
