@@ -275,6 +275,7 @@ public class AutonomousTest extends LinearOpMode {
         }
     }
 
+<<<<<<< HEAD
 
     public boolean moveArmToBlue(){
         color_sensor.enableLed(false);
@@ -299,3 +300,8 @@ public class AutonomousTest extends LinearOpMode {
 
     }
 }
+=======
+    //end
+
+}
+>>>>>>> master
