@@ -126,7 +126,7 @@ public class AutonomousTest extends LinearOpMode {
 
 
 
-        turnRightToDegrees(TURN_SPEED, 270);
+        turnDegrees(TURN_SPEED, -90);
         sleep(2000);
 
         //Simple loop - running until the color sensor received input data and the servo has moved
@@ -136,8 +136,7 @@ public class AutonomousTest extends LinearOpMode {
             telemetry.update();
         }while(!moveArmToBlue());
 
-        calibrateGyro();
-        turnRightToDegrees(TURN_SPEED, 180);
+        turnDegrees(TURN_SPEED, 180);
         stopMovement();
         sleep(2000);
         moveForwardTime(MOVE_SPEED, 2000);
@@ -150,8 +149,8 @@ public class AutonomousTest extends LinearOpMode {
     //methods
     //*********
 
-
-    public void moveForward(double power){
+    //Forward Movement
+    private void moveForward(double power){
 
         motorFrontRight.setPower(power);
         motorFrontLeft.setPower(power);
@@ -159,13 +158,41 @@ public class AutonomousTest extends LinearOpMode {
         motorRearLeft.setPower(power);
     }
 
+    private void moveForwardTime (double power, long time) throws InterruptedException{
 
-    public void moveForwardTime (double power, long time) throws InterruptedException{
+        double initHeading = gyro.getHeading();
+        double currHeading;
         moveForward(power);
-        Thread.sleep(time);
+        timer.reset();
+
+        do{
+            currHeading = gyro.getHeading();
+
+            if(initHeading + currHeading > initHeading + 180)
+                currHeading = currHeading - 360;
+
+            if(currHeading < initHeading - 2){
+                motorFrontLeft.setPower(0);
+                motorRearLeft.setPower(0);
+                motorFrontRight.setPower(power);
+                motorRearRight.setPower(power);
+            }else if(currHeading > initHeading + 2){
+                motorFrontLeft.setPower(power);
+                motorRearLeft.setPower(power);
+                motorFrontRight.setPower(0);
+                motorRearRight.setPower(0);
+            }else if (currHeading < initHeading + 2 && currHeading > initHeading - 2){
+                motorFrontLeft.setPower(power);
+                motorRearLeft.setPower(power);
+                motorFrontRight.setPower(power);
+                motorRearRight.setPower(power);
+            }
+        }while(timer.milliseconds() < time);
+
+        stopMovement();
     }
 
-    public void moveForwardODS (double power, double distance){
+    private void moveForwardODS (double power, double distance){
         double reflectedDistance;
         moveForward(power);
 
@@ -181,8 +208,8 @@ public class AutonomousTest extends LinearOpMode {
 
     }
 
-
-    public void turn(double power, String direction){
+    //Turning
+    private void turn(double power, String direction){
 
         if(direction.equals("right")){
             power = -power;
@@ -194,43 +221,40 @@ public class AutonomousTest extends LinearOpMode {
         motorRearRight.setPower(power);
     }
 
-    public void turnLeftToDegrees(double power, double degree){
+    private void turnDegrees(double power, double degree){
 
-        turn(power, "left");
+        double currHeading;
+        double initHeading = gyro.getHeading();
 
-        int heading = gyro.getHeading();
-        
-        while(!(heading > degree-10 && heading < degree +10) ) {
-
-            heading = gyro.getHeading();
-            telemetry.addData("Degrees",heading);
-            telemetry.update();
+        if(degree < 0) {
+            turn(power, "right");
+        }else if(degree > 0){
+            turn(power, "left");
         }
+
+
+        if(initHeading + degree > 359){
+            degree = degree - 360;
+        }else if(initHeading + degree < 0){
+            degree = degree + 360;
+        }
+
+        do{
+
+            currHeading = gyro.getHeading();
+            telemetry.addData("Degrees",currHeading);
+            telemetry.update();
+        }while(!(currHeading > initHeading + degree - 10 && currHeading < initHeading + degree + 10) );
+
         stopMovement();
     }
 
-    public void turnRightToDegrees(double power, double degree){
-        turn(power, "right");
-
-        
-        int heading = gyro.getHeading();
-
-        while(!(heading > degree-10 && heading < degree +10) ) {
-
-            heading = gyro.getHeading();
-            telemetry.addData("Degrees",heading);
-            telemetry.update();
-        }
-        stopMovement();
-    }
-
-
-    public void stopMovement(){
+    private void stopMovement(){
         moveForward(0);
     }
 
-
-    public double linearAlgorithmODS(double lightIntensity){
+    //Sensors
+    private double linearAlgorithmODS(double lightIntensity){
         //*********************************************************************************
         //makes the value returned by the sensor proportional with the distance in centimeters
         //inverse square root (intensity at the power 0.5)
@@ -239,7 +263,7 @@ public class AutonomousTest extends LinearOpMode {
         return Math.sqrt(1/lightIntensity)*ODS_SCALE_MULTIPLIER;
     }
 
-    public void calibrateGyro(){
+    private void calibrateGyro(){
         gyro.calibrate();
 
         while (gyro.isCalibrating())  {
@@ -253,21 +277,7 @@ public class AutonomousTest extends LinearOpMode {
         }
     }
 
-    public void getColor(){
-
-        color_sensor.enableLed(false);
-
-        while(!isStopRequested()) {
-
-            double color = color_sensor.red();
-
-            telemetry.addData("Color number", color*10);
-            telemetry.update();
-        }
-    }
-
-
-    public boolean moveArmToBlue(){
+    private boolean moveArmToBlue(){
         color_sensor.enableLed(false);
 
         if(color_sensor.blue()> color_sensor.red() && color_sensor.blue() > color_sensor.green()){
