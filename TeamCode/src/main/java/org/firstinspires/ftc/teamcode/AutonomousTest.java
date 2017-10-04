@@ -171,23 +171,31 @@ public class AutonomousTest extends LinearOpMode {
             if(initHeading + currHeading > initHeading + 180)
                 currHeading = currHeading - 360;
 
-            if(currHeading < initHeading - 2){
+
+            if(currHeading < initHeading - 2 && currHeading > initHeading - 46){
+                motorFrontLeft.setPower(power/2);
+                motorRearLeft.setPower(power/2);
+                motorFrontRight.setPower(power);
+                motorRearRight.setPower(power);
+            }else if(currHeading > initHeading + 2 && currHeading < initHeading + 46) {
+                motorFrontLeft.setPower(power);
+                motorRearLeft.setPower(power);
+                motorFrontRight.setPower(power / 2);
+                motorRearRight.setPower(power / 2);
+            }else if(currHeading < initHeading - 45){
                 motorFrontLeft.setPower(0);
                 motorRearLeft.setPower(0);
                 motorFrontRight.setPower(power);
                 motorRearRight.setPower(power);
-            }else if(currHeading > initHeading + 2){
+            }else if(currHeading > initHeading + 45){
                 motorFrontLeft.setPower(power);
                 motorRearLeft.setPower(power);
                 motorFrontRight.setPower(0);
                 motorRearRight.setPower(0);
             }else if (currHeading < initHeading + 2 && currHeading > initHeading - 2){
-                motorFrontLeft.setPower(power);
-                motorRearLeft.setPower(power);
-                motorFrontRight.setPower(power);
-                motorRearRight.setPower(power);
+                moveForward(power);
             }
-        }while(timer.milliseconds() < time);
+        }while(timer.milliseconds() < time || !(currHeading < initHeading + 2 && currHeading > initHeading - 2));
 
         stopMovement();
     }
