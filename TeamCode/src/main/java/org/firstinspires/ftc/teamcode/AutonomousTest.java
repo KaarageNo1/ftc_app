@@ -63,7 +63,7 @@ public class AutonomousTest extends LinearOpMode {
     private double cap_pos = 0.05;
 
 
-    //Simple timer - helps track the calibration
+    //Simple timer - helps track the calibration and other processes
     ElapsedTime timer = new ElapsedTime();
 
 
@@ -137,11 +137,9 @@ public class AutonomousTest extends LinearOpMode {
         }while(!moveArmToBlue());
 
         turnDegrees(TURN_SPEED, 180);
-        stopMovement();
         sleep(2000);
         moveForwardTime(MOVE_SPEED, 2000);
 
-        stopMovement();
     }
 
 
@@ -158,19 +156,24 @@ public class AutonomousTest extends LinearOpMode {
         motorRearLeft.setPower(power);
     }
 
-    private void moveForwardTime (double power, long time) throws InterruptedException{
+    private void moveForwardTime (double power, long time){
 
         double initHeading = gyro.getHeading();
         double currHeading;
         moveForward(power);
         timer.reset();
 
+        if(initHeading > 180)
+            initHeading -= 360;
+
         do{
             currHeading = gyro.getHeading();
 
-            if(initHeading + currHeading > initHeading + 180)
-                currHeading = currHeading - 360;
+            if(currHeading > 180)
+                currHeading -= 360;
 
+            telemetry.addData("Inclination", currHeading);
+            telemetry.update();
 
             if(currHeading < initHeading - 2 && currHeading > initHeading - 46){
                 motorFrontLeft.setPower(power/2);
@@ -288,11 +291,11 @@ public class AutonomousTest extends LinearOpMode {
     private boolean moveArmToBlue(){
         color_sensor.enableLed(false);
 
-        if(color_sensor.blue()> color_sensor.red() && color_sensor.blue() > color_sensor.green()){
+        if(color_sensor.blue()> color_sensor.red() && color_sensor.blue() > color_sensor.green() && color_sensor.red() + color_sensor.blue() + color_sensor.green() > 2){
 
             servoBeacon.setPosition(BEACON_LEFT);
             return true;
-        }else if(color_sensor.red()> color_sensor.blue() && color_sensor.red() > color_sensor.green()){
+        }else if(color_sensor.red()> color_sensor.blue() && color_sensor.red() > color_sensor.green() && color_sensor.red() + color_sensor.blue() + color_sensor.green() > 2){
 
             servoBeacon.setPosition(BEACON_RIGHT);
             return true;
