@@ -13,6 +13,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 
+//THIS IS NOT THE UP TO DATE FILE
+//[FORMA FINALA] Reprezentare
 
 
 @Autonomous(name = "AutonomousTest", group = "Autonomous")
